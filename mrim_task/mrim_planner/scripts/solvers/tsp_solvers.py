@@ -269,14 +269,29 @@ class TSPSolver3D():
             # Prepare positions of the viewpoints in the world
             positions = np.array([vp.pose.point.asList() for vp in viewpoints])
 
-            raise NotImplementedError('[STUDENTS TODO] KMeans clustering of viewpoints not implemented. You have to finish it on your own')
+            #raise NotImplementedError('[STUDENTS TODO] KMeans clustering of viewpoints not implemented. You have to finish it on your own')
             # Tips:
             #  - utilize sklearn.cluster.KMeans implementation (https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html)
             #  - after finding the labels, you may want to swap the classes (e.g., by looking at the distance of the UAVs from the cluster centers)
             #  - Find the start poses of the UAVs in problem.start_poses[r].position.{x,y,z}
 
             # TODO: fill 1D list 'labels' of size len(viewpoints) with indices of the robots
-            labels = [randint(0, k - 1) for vp in viewpoints]
+            # ALREADY IMPLEMENTED -- Guillermo Gil
+            print("[INFO]: Starting KMeans calculus")
+            kmeans_implementation = KMeans(n_clusters=2).fit(positions)
+            cluster_centers = kmeans_implementation.cluster_centers_
+            print("[INFO]: Kmean implementation calculated successfully")
+            dist_rob1_to_clust1 = np.sqrt((problem.start_poses[0].position.x-cluster_centers[0][0])**2+(problem.start_poses[0].position.y-cluster_centers[0][1])**2+(problem.start_poses[0].position.z-cluster_centers[0][2])**2)
+            dist_rob1_to_clust2 = np.sqrt((problem.start_poses[0].position.x-cluster_centers[1][0])**2+(problem.start_poses[0].position.y-cluster_centers[1][1])**2+(problem.start_poses[0].position.z-cluster_centers[1][2])**2)
+            dist_rob2_to_clust1 = np.sqrt((problem.start_poses[1].position.x-cluster_centers[0][0])**2+(problem.start_poses[1].position.y-cluster_centers[0][1])**2+(problem.start_poses[1].position.z-cluster_centers[0][2])**2)
+            dist_rob2_to_clust2 = np.sqrt((problem.start_poses[1].position.x-cluster_centers[1][0])**2+(problem.start_poses[1].position.y-cluster_centers[1][1])**2+(problem.start_poses[1].position.z-cluster_centers[1][2])**2)
+            if( (dist_rob1_to_clust1+dist_rob2_to_clust2) < (dist_rob1_to_clust2+dist_rob2_to_clust1)):
+                labels = kmeans_implementation.labels_
+            else:
+                labels = kmeans_implementation.labels_ ^ 1
+
+            #for r in range(problem.number_of_robots):
+            #    uav_initial_pos[r] = np.array(problem.start_poses[r].position.x, problem.start_poses[r].position.y, problem.start_poses[r].position.z)
 
         ## | -------------------- Random clustering ------------------- |
         else:
