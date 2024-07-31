@@ -276,11 +276,11 @@ class TSPSolver3D():
             #  - Find the start poses of the UAVs in problem.start_poses[r].position.{x,y,z}
 
             # TODO: fill 1D list 'labels' of size len(viewpoints) with indices of the robots
-            # ALGORITHM DONE BY Guillermo Gil -- Pending 
-            print("[INFO]: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA - Starting KMeans calculus")
+            # ALREADY IMPLEMENTED -- Guillermo Gil
+            print("[INFO]: Starting KMeans calculus")
             kmeans_implementation = KMeans(n_clusters=2).fit(positions)
             cluster_centers = kmeans_implementation.cluster_centers_
-            print("[INFO]: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA - Kmean implementation calculated successfully")
+            print("[INFO]: Kmean implementation calculated successfully")
             dist_rob1_to_clust1 = np.sqrt((problem.start_poses[0].position.x-cluster_centers[0][0])**2+(problem.start_poses[0].position.y-cluster_centers[0][1])**2+(problem.start_poses[0].position.z-cluster_centers[0][2])**2)
             dist_rob1_to_clust2 = np.sqrt((problem.start_poses[0].position.x-cluster_centers[1][0])**2+(problem.start_poses[0].position.y-cluster_centers[1][1])**2+(problem.start_poses[0].position.z-cluster_centers[1][2])**2)
             dist_rob2_to_clust1 = np.sqrt((problem.start_poses[1].position.x-cluster_centers[0][0])**2+(problem.start_poses[1].position.y-cluster_centers[0][1])**2+(problem.start_poses[1].position.z-cluster_centers[0][2])**2)
