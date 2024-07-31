@@ -105,7 +105,7 @@ class AStar:
             return path
 
         # raise NotImplementedError("[STUDENTS TODO] A*: path straightening is not finished. Finish it on your own.")
-        # DOING by Junghwan Ro
+        # DONE by Junghwan Ro
         # Tips:
         #  - divide the given path by a certain ratio and use this method recursively
         """
