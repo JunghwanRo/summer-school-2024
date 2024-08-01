@@ -484,7 +484,7 @@ class TrajectoryUtils:
             # Tips:
             #  - check code examples for TOPPRA: https://hungpham2511.github.io/toppra/auto_examples/index.html
             #  - use 'toppra_trajectory' and the predefined sampling step 'sampling_step'
-            num_points = int(toppra_trajectory.duration/sampling_step)
+            num_points = int(toppra_trajectory.duration/sampling_step) + 3
             ts_sample = np.linspace(start=0, stop=toppra_trajectory.duration, num=num_points)
             qs_sample = toppra_trajectory(ts_sample)
             #samples = [] # [STUDENTS TODO] Fill this variable with trajectory samples
