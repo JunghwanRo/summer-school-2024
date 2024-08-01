@@ -13,39 +13,45 @@ import numpy as np
 import toppra as ta
 import toppra.constraint as constraint
 import toppra.algorithm as algo
+
 ta.setup_logging("INFO")
 
 ## | ------------------------- Classes ------------------------ |
+
 
 # # #{ class Segment
 class Segment:
 
     def __init__(self, idx_from, idx_to, poses=[]):
         self.idx_from = idx_from
-        self.idx_to   = idx_to
-        self.poses    = poses
+        self.idx_to = idx_to
+        self.poses = poses
 
     def getTime(self, dT):
         return len(self.poses) * dT
+
+
 # # #}
+
 
 # # #{ class Trajectory
 class Trajectory:
 
     def __init__(self, dT, waypoints):
-        self.dT                    = dT
-        self.poses                 = []
-        self.length                = 0.0
-        self.len_changed           = True
+        self.dT = dT
+        self.poses = []
+        self.length = 0.0
+        self.len_changed = True
 
-        self.waypoints        = waypoints
+        self.waypoints = waypoints
 
-        self.segments = [Segment(i-1, i) for i in range(1, len(self.waypoints))]
+        self.segments = [Segment(i - 1, i) for i in range(1, len(self.waypoints))]
 
     # # #{ setSegment()
     def setSegment(self, seg_idx_from, poses):
         self.segments[seg_idx_from].poses = poses
-        self.len_changed                  = True
+        self.len_changed = True
+
     # # #}
 
     # # #{ getPoses()
@@ -54,18 +60,19 @@ class Trajectory:
         for seg in self.segments:
             poses = poses + seg.poses
         return poses
+
     # # #}
 
     # # #{ delaySegment()
     def delaySegment(self, seg_idx, t, at_start=False):
-        '''
+        """
         Delays particular segment by t seconds either in start or end point.
 
         Parameters:
             seg_idx (int): segment index
             t (float): delay in seconds
             at_start (bool): delay is added at the start of the segment if True, at the end otherwise
-        '''
+        """
 
         if seg_idx >= len(self.segments):
             return
@@ -78,8 +85,8 @@ class Trajectory:
         count = int(t / self.dT)
 
         # Copy start/end sample count-times
-        index       = 0 if at_start else -1
-        sequence    = count * [segment.poses[index]]
+        index = 0 if at_start else -1
+        sequence = count * [segment.poses[index]]
 
         # Replace poses at given segment
         self.segments[seg_idx].poses = segment.poses[:index] + sequence + segment.poses[index:]
@@ -88,12 +95,12 @@ class Trajectory:
 
     # # #{ delayStart()
     def delayStart(self, t):
-        '''
+        """
         Delays trajectory at its beginning by t seconds.
 
         Parameters:
             t (float): delay in seconds
-        '''
+        """
 
         self.delaySegment(0, t, at_start=True)
 
@@ -101,15 +108,16 @@ class Trajectory:
 
     # # #{ print()
     def print(self):
-        print('Trajectory:')
-        print(' - time: {:.1f} s'.format(self.getTime()))
-        print(' - length: {:.1f} m'.format(self.getLength()))
-        print(' - poses:')
+        print("Trajectory:")
+        print(" - time: {:.1f} s".format(self.getTime()))
+        print(" - length: {:.1f} m".format(self.getLength()))
+        print(" - poses:")
         poses = self.getPoses()
         for i in range(len(poses)):
-            p        = poses[i]
-            appendix = ''
-            print('  [{:d}]: ({:.4f}, {:.4f}, {:.4f}) | hdg: {:.2f}{:s}'.format(i, p[0], p[1], p[2], p[3], appendix))
+            p = poses[i]
+            appendix = ""
+            print("  [{:d}]: ({:.4f}, {:.4f}, {:.4f}) | hdg: {:.2f}{:s}".format(i, p[0], p[1], p[2], p[3], appendix))
+
     # # #}
 
     # # #{ GETTERS
@@ -122,31 +130,34 @@ class Trajectory:
         # if not cached
         if self.len_changed:
             self.len_changed = False
-            self.length      = 0.0
+            self.length = 0.0
 
             for seg in self.segments:
                 for i in range(1, len(seg.poses)):
                     self.length += distEuclidean(seg.poses[i - 1], seg.poses[i])
 
         return self.length
+
     # # #}
+
 
 # # #}
 
+
 # # #{ class TrajectoryUtils
-class TrajectoryUtils():
+class TrajectoryUtils:
 
     # #{ __init__()
     def __init__(self, max_velocity, max_acceleration, dT):
-        self.dT               = dT
-        self.max_velocity     = max_velocity
+        self.dT = dT
+        self.max_velocity = max_velocity
         self.max_acceleration = max_acceleration
+
     # #}
 
     ## | ------------- Functions: trajectory (re)sampling ------------- |
 
     # # #{ interpolateHeading()
-
     def interpolateHeading(self, waypoints:Viewpoint):
         '''
         Interpolates linearly the UAV heading between waypoints.
@@ -223,7 +234,7 @@ class TrajectoryUtils():
 
     # #{ sampleStraightSegmentWithStops()
     def sampleStraightSegmentWithStops(self, start, stop):
-        '''
+        """
         Samples linear segment with zero velocity at start and stop.
 
         Parameters:
@@ -232,29 +243,29 @@ class TrajectoryUtils():
 
         Returns:
             poses (list[Pose]): list of poses which respect dynamic constraints of the UAV
-        '''
+        """
 
         # print("sampleWithStops from", start, "to", stop)
 
-        init_velocity     = 0
-        final_velocity    = 0
+        init_velocity = 0
+        final_velocity = 0
         sample_start_time = 0
 
-        poses                = []
+        poses = []
         trajectory_part_time = 0
         # acc = 0 # no jeck jet
         dist_total = distEuclidean(start, stop)
-        #print("dist_total", dist_total)
+        # print("dist_total", dist_total)
 
         # [STUDENTS TODO] Rework the method to per-axis computation if you want to exploit the allowed dynamics in all axes
         # Set minimal velocity/acceleration to the axis limit with minimal constraint
         min_ax_vel = min(self.max_velocity)
         min_ax_acc = min(self.max_acceleration)
 
-        time_from_init_to_max_vel  = (min_ax_vel - init_velocity) / min_ax_acc
+        time_from_init_to_max_vel = (min_ax_vel - init_velocity) / min_ax_acc
         time_from_max_to_final_vel = (min_ax_vel - final_velocity) / min_ax_acc
 
-        dist_from_init_to_max_vel  = 0.5 * (min_ax_vel + init_velocity) * time_from_init_to_max_vel  # average speed * time
+        dist_from_init_to_max_vel = 0.5 * (min_ax_vel + init_velocity) * time_from_init_to_max_vel  # average speed * time
         dist_from_max_vel_to_final = 0.5 * (min_ax_vel + final_velocity) * time_from_max_to_final_vel  # average speed * time
 
         """
@@ -264,33 +275,35 @@ class TrajectoryUtils():
         print("dist_from_max_vel_to_final", dist_from_max_vel_to_final, "m")
         """
 
-        if dist_total < dist_from_init_to_max_vel + dist_from_max_vel_to_final: # can not reach maximal speed in straight line
-            #print("can not reach max vel in trajectory")
-            t      = 0
+        if dist_total < dist_from_init_to_max_vel + dist_from_max_vel_to_final:  # can not reach maximal speed in straight line
+            # print("can not reach max vel in trajectory")
+            t = 0
             sample = 0
 
             if init_velocity == 0 and final_velocity == 0:
 
                 time_to_possible_max_vel = math.sqrt(dist_total / min_ax_acc)
-                velocity_in_middle       = time_to_possible_max_vel * min_ax_acc
-                trajectory_part_time     = 2 * time_to_possible_max_vel
+                velocity_in_middle = time_to_possible_max_vel * min_ax_acc
+                trajectory_part_time = 2 * time_to_possible_max_vel
 
             elif init_velocity > final_velocity:  # initial velocity is larger than final, in the end is additinal decelerating
 
-                time_final_decel         = (init_velocity - final_velocity) / min_ax_acc
-                dist_final_decel         = time_final_decel * (init_velocity + final_velocity) * 0.5
-                dist_acc_decc            = dist_total - dist_final_decel
-                time_to_possible_max_vel = (-init_velocity + math.sqrt(init_velocity ** 2 + min_ax_acc * dist_acc_decc)) / min_ax_acc
-                velocity_in_middle       = init_velocity + time_to_possible_max_vel * min_ax_acc
-                trajectory_part_time     = time_to_possible_max_vel + time_final_decel
+                time_final_decel = (init_velocity - final_velocity) / min_ax_acc
+                dist_final_decel = time_final_decel * (init_velocity + final_velocity) * 0.5
+                dist_acc_decc = dist_total - dist_final_decel
+                time_to_possible_max_vel = (-init_velocity + math.sqrt(init_velocity**2 + min_ax_acc * dist_acc_decc)) / min_ax_acc
+                velocity_in_middle = init_velocity + time_to_possible_max_vel * min_ax_acc
+                trajectory_part_time = time_to_possible_max_vel + time_final_decel
 
             else:
 
-                time_init_accel          = (final_velocity - init_velocity) / min_ax_acc
-                dist_init_accel          = time_init_accel * (init_velocity + final_velocity) * 0.5
-                dist_acc_decc            = dist_total - dist_init_accel
-                time_to_possible_max_vel = time_init_accel + (-final_velocity + math.sqrt(final_velocity ** 2 + min_ax_acc * dist_acc_decc)) / min_ax_acc
-                velocity_in_middle       = init_velocity + time_to_possible_max_vel * min_ax_acc
+                time_init_accel = (final_velocity - init_velocity) / min_ax_acc
+                dist_init_accel = time_init_accel * (init_velocity + final_velocity) * 0.5
+                dist_acc_decc = dist_total - dist_init_accel
+                time_to_possible_max_vel = (
+                    time_init_accel + (-final_velocity + math.sqrt(final_velocity**2 + min_ax_acc * dist_acc_decc)) / min_ax_acc
+                )
+                velocity_in_middle = init_velocity + time_to_possible_max_vel * min_ax_acc
 
                 """
                 print("time_init_accel", time_init_accel)
@@ -311,35 +324,38 @@ class TrajectoryUtils():
 
                 t = (sample + 1) * self.dT + sample_start_time
                 v = init_velocity + min_ax_acc * t
-                s = init_velocity * t + 0.5 * min_ax_acc * (t ** 2)
+                s = init_velocity * t + 0.5 * min_ax_acc * (t**2)
 
                 pose_in_dist = poseInDistance(start, stop, s)
                 poses.append(pose_in_dist)
                 sample += 1
-                #print("t", t, "v", v, "s", s, "sample", sample)
+                # print("t", t, "v", v, "s", s, "sample", sample)
 
-
-            #print("end acc")
+            # print("end acc")
 
             while (sample + 1) * self.dT <= trajectory_part_time - sample_start_time:
 
-                t      = (sample + 1) * self.dT + sample_start_time
+                t = (sample + 1) * self.dT + sample_start_time
                 t_part = t - time_to_possible_max_vel
-                v      = velocity_in_middle - min_ax_acc * t_part
-                s      = time_to_possible_max_vel * 0.5 * (velocity_in_middle + init_velocity) + velocity_in_middle * t_part - 0.5 * min_ax_acc * (t_part ** 2)
+                v = velocity_in_middle - min_ax_acc * t_part
+                s = (
+                    time_to_possible_max_vel * 0.5 * (velocity_in_middle + init_velocity)
+                    + velocity_in_middle * t_part
+                    - 0.5 * min_ax_acc * (t_part**2)
+                )
 
                 pose_in_dist = poseInDistance(start, stop, s)
                 poses.append(pose_in_dist)
                 sample += 1
-                #print("t", t, "v", v, "s", s, "sample", sample)
+                # print("t", t, "v", v, "s", s, "sample", sample)
 
-            #print("end decc")
+            # print("end decc")
 
         else:  # can reach maximal speed in straight line
 
-            #print("can reach max vel")
-            dist_constant_speed  = dist_total - dist_from_init_to_max_vel - dist_from_max_vel_to_final
-            time_constant_speed  = dist_constant_speed / min_ax_vel
+            # print("can reach max vel")
+            dist_constant_speed = dist_total - dist_from_init_to_max_vel - dist_from_max_vel_to_final
+            time_constant_speed = dist_constant_speed / min_ax_vel
             trajectory_part_time = time_from_init_to_max_vel + time_constant_speed + time_from_max_to_final_vel
 
             """
@@ -353,51 +369,54 @@ class TrajectoryUtils():
 
                 t = (sample + 1) * self.dT + sample_start_time
                 v = init_velocity + min_ax_acc * t
-                s = init_velocity * t + 0.5 * min_ax_acc * (t ** 2)
+                s = init_velocity * t + 0.5 * min_ax_acc * (t**2)
 
                 pose_in_dist = poseInDistance(start, stop, s)
                 poses.append(pose_in_dist)
                 sample += 1
-                #print("t", t, "v", v, "s", s, "sample", sample)
+                # print("t", t, "v", v, "s", s, "sample", sample)
 
-            #print("end acc")
+            # print("end acc")
 
             while (sample + 1) * self.dT <= time_from_init_to_max_vel + time_constant_speed - sample_start_time:
 
-                t      = (sample + 1) * self.dT + sample_start_time
+                t = (sample + 1) * self.dT + sample_start_time
                 t_part = t - time_from_init_to_max_vel
-                v      = min_ax_vel
-                s      = dist_from_init_to_max_vel + v * t_part
+                v = min_ax_vel
+                s = dist_from_init_to_max_vel + v * t_part
 
                 pose_in_dist = poseInDistance(start, stop, s)
                 poses.append(pose_in_dist)
                 sample += 1
-                #print("t", t, "v", v, "s", s, "sample", sample)
+                # print("t", t, "v", v, "s", s, "sample", sample)
 
-            #print("end const")
+            # print("end const")
 
             while (sample + 1) * self.dT <= time_from_init_to_max_vel + time_constant_speed + time_from_max_to_final_vel - sample_start_time:
 
-                t      = (sample + 1) * self.dT + sample_start_time
+                t = (sample + 1) * self.dT + sample_start_time
                 t_part = t - (time_from_init_to_max_vel + time_constant_speed)
-                v      = min_ax_vel - min_ax_acc * t_part
-                s      = (dist_total - dist_from_max_vel_to_final) + min_ax_vel * t_part - 0.5 * min_ax_acc * (t_part ** 2)
+                v = min_ax_vel - min_ax_acc * t_part
+                s = (dist_total - dist_from_max_vel_to_final) + min_ax_vel * t_part - 0.5 * min_ax_acc * (t_part**2)
 
                 pose_in_dist = poseInDistance(start, stop, s)
                 poses.append(pose_in_dist)
                 sample += 1
-                #print("t", t, "v", v, "s", s, "sample", sample)
+                # print("t", t, "v", v, "s", s, "sample", sample)
 
             if final_velocity == 0 and poses[-1] != stop:
                 poses.append(stop)
-                #print("t last", "v", 0, "s", dist_total)
+                # print("t last", "v", 0, "s", dist_total)
 
         return poses, trajectory_part_time
+
     # #}
 
     # #{ sampleTrajectoryThroughWaypoints()
-    def sampleTrajectoryThroughWaypoints(self, trajectory, with_stops, smooth_path, smoothing_la_dist, smoothing_sampling_step, velocity_limits, acceleration_limits):
-        '''
+    def sampleTrajectoryThroughWaypoints(
+        self, trajectory, with_stops, smooth_path, smoothing_la_dist, smoothing_sampling_step, velocity_limits, acceleration_limits
+    ):
+        """
         Samples trajectory such that it respects dynamic constraints
 
         Parameters:
@@ -411,7 +430,7 @@ class TrajectoryUtils():
 
         Returns:
             trajectory (Trajectory): trajectory which samples respect dynamic constraints of the UAV
-        '''
+        """
 
         if with_stops:
 
@@ -421,7 +440,7 @@ class TrajectoryUtils():
             # Iterate through sequential waypoint pairs
             for w_idx in range(1, len(trajectory.waypoints)):
                 pose_from = trajectory.waypoints[w_idx - 1]
-                pose_to   = trajectory.waypoints[w_idx]
+                pose_to = trajectory.waypoints[w_idx]
 
                 # Sample waypoint-to-waypoint line segments with stops at each start and end
                 poses, _ = self.sampleStraightSegmentWithStops(pose_from, pose_to)
@@ -436,7 +455,7 @@ class TrajectoryUtils():
 
             # If path smoothing is required, smooth the path
             if smooth_path:
-                print('[SMOOTHING PATH]')
+                print("[SMOOTHING PATH]")
                 waypoints = self.getSmoothPath(trajectory.waypoints, smoothing_la_dist, smoothing_sampling_step)
 
             # Otherwise, use the waypoints
@@ -454,43 +473,44 @@ class TrajectoryUtils():
             sampling_step = trajectory.dT
 
             # STUDENTS TODO: Sample the path parametrization 'toppra_trajectory' (instance of TOPPRA library).
-            raise NotImplementedError('[STUDENTS TODO] Trajectory sampling not finished. You have to implement it on your own.')
+            raise NotImplementedError("[STUDENTS TODO] Trajectory sampling not finished. You have to implement it on your own.")
             # Tips:
             #  - check code examples for TOPPRA: https://hungpham2511.github.io/toppra/auto_examples/index.html
             #  - use 'toppra_trajectory' and the predefined sampling step 'sampling_step'
 
-            samples = [] # [STUDENTS TODO] Fill this variable with trajectory samples
+            samples = []  # [STUDENTS TODO] Fill this variable with trajectory samples
 
             # Convert to Trajectory class
-            poses      = [Pose(q[0], q[1], q[2], q[3]) for q in samples]
+            poses = [Pose(q[0], q[1], q[2], q[3]) for q in samples]
             trajectory = self.posesToTrajectory(poses)
 
         return trajectory
+
     # #}
 
     # #{ checkCollisionsOnHorizonAndBreak()
     def checkCollisionsOnHorizonAndBreak(self, trajectory, reference_trajectory, horizon, safety_distance):
-        '''
+        """
         TODO
-        '''
+        """
 
         # TODO: there is still some edge-case deadlock
 
-        total_delay     = 0
+        total_delay = 0
 
-        ref_poses     = reference_trajectory.getPoses()
+        ref_poses = reference_trajectory.getPoses()
         ref_poses_len = len(ref_poses)
 
-        traj_poses     = trajectory.getPoses()
+        traj_poses = trajectory.getPoses()
         traj_poses_len = len(traj_poses)
 
-        print('[checkCollisionsOnHorizonAndBreak] horizon count: {:d}'.format(horizon))
+        print("[checkCollisionsOnHorizonAndBreak] horizon count: {:d}".format(horizon))
 
         s_idx = 0
         while s_idx < traj_poses_len:
 
             traj_poses_len = len(traj_poses)
-            collision_idx  = None
+            collision_idx = None
 
             for i in range(s_idx, min(s_idx + horizon, traj_poses_len)):
 
@@ -527,18 +547,18 @@ class TrajectoryUtils():
                 # TODO: slow down continually instead of as fast as possible
 
                 # Slow down with maximal deceleration
-                stopping_dist  = min(0.0, min_velocity * self.dT - 0.5 * min_ax_acc * (self.dT ** 2))
+                stopping_dist = min(0.0, min_velocity * self.dT - 0.5 * min_ax_acc * (self.dT**2))
 
                 # Compute the sample pose
                 stopping_start = traj_poses[min_velocity_idx]
                 if stopping_dist > 0.0:
                     stopping_end = traj_poses[min_velocity_idx + 1]
-                    pose         = poseInDistance(stopping_start, stopping_end, stopping_dist)
+                    pose = poseInDistance(stopping_start, stopping_end, stopping_dist)
                 else:
                     pose = stopping_start
 
                 # Add the sample pose
-                traj_poses = traj_poses[:min_velocity_idx + i + 1] + [pose] + traj_poses[min_velocity_idx + i + 1:]
+                traj_poses = traj_poses[: min_velocity_idx + i + 1] + [pose] + traj_poses[min_velocity_idx + i + 1 :]
                 total_delay += 1
 
                 min_velocity = stopping_dist / self.dT
@@ -551,11 +571,12 @@ class TrajectoryUtils():
         trajectory = self.posesToTrajectory(traj_poses)
 
         return trajectory, total_delay * self.dT
+
     # #}
 
     # #{ computeTimeParametrization()
     def computeTimeParametrization(self, waypoints, v_lims, a_lims):
-        '''
+        """
         Computes time parametrization among the given waypoints.
 
         Parameters:
@@ -565,11 +586,12 @@ class TrajectoryUtils():
 
         Returns:
             trajectory (TOPPRA instance): time parametrization of the given waypoints
-        '''
+        """
+
         def get_normalized_distances(waypoints):
             distances = [0]
             for i in range(1, len(waypoints)):
-                dist = distEuclidean(waypoints[i].point, waypoints[i-1].point)
+                dist = distEuclidean(waypoints[i].point, waypoints[i - 1].point)
                 distances.append(distances[-1] + dist)
             total_distance = distances[-1]
             return [d / total_distance for d in distances]
@@ -577,19 +599,20 @@ class TrajectoryUtils():
         wp_lists = [wp.asList() for wp in waypoints]
         normalized_distances = get_normalized_distances(waypoints)
         path = ta.SplineInterpolator(normalized_distances, wp_lists)
-        pc_vel     = constraint.JointVelocityConstraint(v_lims)
-        pc_acc     = constraint.JointAccelerationConstraint(a_lims)
-        instance   = algo.TOPPRA([pc_vel, pc_acc], path, parametrizer="ParametrizeConstAccel", gridpt_max_err_threshold=1e-7)
+        pc_vel = constraint.JointVelocityConstraint(v_lims)
+        pc_acc = constraint.JointAccelerationConstraint(a_lims)
+        instance = algo.TOPPRA([pc_vel, pc_acc], path, parametrizer="ParametrizeConstAccel", gridpt_max_err_threshold=1e-7)
         trajectory = instance.compute_trajectory()
 
         return trajectory
+
     # #} end of computeTimeParametrization()
 
     ## | -------- Functions: collision prevention/avoidance ------- |
 
     # # #{ resolveCollisions()
     def resolveCollisions(self, method, problem, trajectories, safety_distance):
-        '''
+        """
         Postprocesses given trajectories such that there are no collisions.
 
         Parameters:
@@ -601,41 +624,42 @@ class TrajectoryUtils():
             trajectories (list[N]): list of non-colliding trajectories (hopefully)
             delayed_robots (list[N]): indices of delayed robots
             delays (list[N]): delay in seconds for each robot
-        '''
+        """
 
         # # #{ Resolve collisions and resample trajectories
 
         print("[COLLISION AVOIDANCE] method: {:s}".format(method))
         delay_robot_idx, delay_t = None, 0.0
-        delayed_robots, delays   = [], []
+        delayed_robots, delays = [], []
 
         ## |  [COLLISION AVOIDANCE METHOD #1]: Delay 2nd UAV by the length of the 1st UAV trajectory  |
-        if method == 'delay_2nd_till_1st_UAV_finishes':
+        if method == "delay_2nd_till_1st_UAV_finishes":
 
             delay_robot_idx = problem.number_of_robots - 1
-            delay_t         = trajectories[0].getTime()
+            delay_t = trajectories[0].getTime()
 
             # Delay trajectory of the second UAV at start by the length of the first-UAV trajectory
             trajectories[1].delayStart(delay_t)
 
         ## |  [COLLISION AVOIDANCE METHOD #2]: Delay UAV with shorter trajectory at start until there is no collision occurring  |
-        elif method == 'delay_till_no_collisions_occur':
+        elif method == "delay_till_no_collisions_occur":
 
-            raise NotImplementedError('[STUDENTS TODO] Collision prevention method \'delay_till_no_collisions_occur\' not finished. You have to finish it on your own.')
+            # raise NotImplementedError('[STUDENTS TODO] Collision prevention method \'delay_till_no_collisions_occur\' not finished. You have to finish it on your own.')
             # Tips:
             #  - you might select which trajectory it is better to delay
             #  - the smallest delay step is the sampling step stored in variable 'self.dT'
 
             delay_step = self.dT
             traj_times = [t.getTime() for t in trajectories]
-            traj_lens  = [t.getLength() for t in trajectories]
+            traj_lens = [t.getLength() for t in trajectories]
 
             # Decide which UAV should be delayed
             # [STUDENTS TODO] CHANGE BELOW
-            delay_robot_idx, nondelay_robot_idx = 0, 1
+            # Compare the lengths of the trajectories and select the shorter one
+            delay_robot_idx, nondelay_robot_idx = np.argmin(traj_lens), np.argmax(traj_lens)
 
             # TIP: use function `self.trajectoriesCollide()` to check if two trajectories are in collision
-            collision_flag, collision_idx = ...
+            collision_flag, collision_idx = self.trajectoriesCollide(trajectories[delay_robot_idx], trajectories[nondelay_robot_idx], safety_distance)
 
             while collision_flag:
 
@@ -643,9 +667,9 @@ class TrajectoryUtils():
                 delay_t += delay_step
 
                 # [STUDENTS TODO] use function `trajectory.delayStart(X)` to delay a UAV at the start location by X seconds
-
+                trajectories[delay_robot_idx].delayStart(delay_step)
                 # keep checking if the robot trajectories collide
-                collision_flag, _ = ...
+                collision_flag, _ = self.trajectoriesCollide(trajectories[delay_robot_idx], trajectories[nondelay_robot_idx], safety_distance)
 
         # # #}
 
@@ -653,13 +677,14 @@ class TrajectoryUtils():
             delayed_robots, delays = [delay_robot_idx], [delay_t]
 
         return trajectories, delayed_robots, delays
+
     # # #}
 
     ## | ---------------- Functions: path smoothing --------------- |
 
     # #{ getSmoothPath()
     def getSmoothPath(self, waypoints, lookahead_distance, sampling_step):
-        '''
+        """
         Smooths given waypoint path.
 
         Parameters:
@@ -669,10 +694,10 @@ class TrajectoryUtils():
 
         Returns:
             path (list[Pose]): smoothed waypoint sequence
-        '''
+        """
 
-        path       = []
-        curr_pose  = waypoints[0]
+        path = []
+        curr_pose = waypoints[0]
         path_index = 0
 
         path.append(curr_pose)
@@ -680,7 +705,7 @@ class TrajectoryUtils():
         # Main control loop
         while True:
 
-            prev_path_index  = path_index
+            prev_path_index = path_index
             goal, path_index = self.getLookaheadPoint(curr_pose, waypoints, lookahead_distance, path_index)
 
             if goal is None:
@@ -688,7 +713,7 @@ class TrajectoryUtils():
 
             if path_index == len(waypoints) - 1 and distEuclidean(waypoints[-1], curr_pose) < sampling_step:
 
-                path[-1].heading = waypoints[path_index].heading # preserve last heading
+                path[-1].heading = waypoints[path_index].heading  # preserve last heading
                 print("Goal reached. End point = ", curr_pose, "Waypoints goal = ", waypoints[-1])
                 break
 
@@ -697,9 +722,9 @@ class TrajectoryUtils():
                 path[-1].heading = waypoints[prev_path_index].heading
 
             velocity = 1.0
-            dt       = sampling_step / velocity
+            dt = sampling_step / velocity
 
-            curr_pose         = simulateStep(curr_pose, goal, velocity, dt)
+            curr_pose = simulateStep(curr_pose, goal, velocity, dt)
             curr_pose.heading = None
             path.append(curr_pose)
 
@@ -711,7 +736,7 @@ class TrajectoryUtils():
 
     # # #{ getDerivation()
     def getDerivation(self, samples):
-        '''
+        """
         Computes 1st order derivation of given samples of dimension N.
 
         Parameters:
@@ -719,23 +744,24 @@ class TrajectoryUtils():
 
         Returns:
             derivatives (list[Pose]): smoothed waypoint sequence of size Nx1
-        '''
+        """
         derivatives = []
         derivatives.append(Pose(0.0, 0.0, 0.0, 0.0))
 
         for k in range(1, len(samples)):
-            dx       = (samples[k].point.x - samples[k-1].point.x) / self.dT
-            dy       = (samples[k].point.y - samples[k-1].point.y) / self.dT
-            dz       = (samples[k].point.z - samples[k-1].point.z) / self.dT
-            dheading = angleDiff(samples[k-1].heading, samples[k].heading) / self.dT
+            dx = (samples[k].point.x - samples[k - 1].point.x) / self.dT
+            dy = (samples[k].point.y - samples[k - 1].point.y) / self.dT
+            dz = (samples[k].point.z - samples[k - 1].point.z) / self.dT
+            dheading = angleDiff(samples[k - 1].heading, samples[k].heading) / self.dT
             derivatives.append(Pose(dx, dy, dz, dheading))
 
         return derivatives
+
     # # #}
 
     # # #{ trajectoriesCollide()
     def trajectoriesCollide(self, traj_a, traj_b, safety_distance):
-        '''
+        """
         Computes whether and possibly where two trajectories collide.
 
         Parameters:
@@ -746,18 +772,19 @@ class TrajectoryUtils():
         Returns:
             bool: collision flag
             int: collision index
-        '''
+        """
         samples_a, samples_b = traj_a.getPoses(), traj_b.getPoses()
-        min_len              = min([len(samples_a), len(samples_b)])
+        min_len = min([len(samples_a), len(samples_b)])
         for i in range(min_len):
             if distEuclidean(samples_a[i].point, samples_b[i].point) < safety_distance:
                 return True, i
         return False, 0
+
     # # #}
 
     # # #{ computeCollisionSegmentsOfTwoTrajectories()
     def computeCollisionSegmentsOfTwoTrajectories(self, traj_A, traj_B, safety_distance):
-        '''
+        """
         Computes collision segments between two trajectories.
 
         Parameters:
@@ -767,23 +794,23 @@ class TrajectoryUtils():
 
         Returns:
             segments (list): list of tuples (start_idx, end_idx) of colliding segments start and end indices
-        '''
+        """
 
         segments = []
 
         # Compute which trajectory is shorter/longer
-        trajs                   = [traj_A, traj_B]
-        poses                   = [t.getPoses() for t in trajs]
-        traj_times              = [t.getTime() for t in trajs]
+        trajs = [traj_A, traj_B]
+        poses = [t.getPoses() for t in trajs]
+        traj_times = [t.getTime() for t in trajs]
         shorter_idx, longer_idx = np.argmin(traj_times), np.argmax(traj_times)
 
         # Compute hysteresis window (max stopping length)
         max_stop_time = max([self.max_velocity[i] / self.max_acceleration[i] for i in range(3)])
-        hysteresis    = int(np.ceil(max_stop_time / self.dT))
+        hysteresis = int(np.ceil(max_stop_time / self.dT))
 
         # Iterate over the collisions list
-        col_prev                                 = pointCollidesWithPath(poses[shorter_idx][0].point, poses[longer_idx], safety_distance)
-        longest_col_seg_sample_count             = 0
+        col_prev = pointCollidesWithPath(poses[shorter_idx][0].point, poses[longer_idx], safety_distance)
+        longest_col_seg_sample_count = 0
         safety_flag, first_col_idx, last_col_idx = True, 0, 0
 
         for i in range(1, len(poses[shorter_idx])):
@@ -796,7 +823,7 @@ class TrajectoryUtils():
 
             # safe->collision: mark unsafe and store the index of first collision
             elif not col_prev and col_now:
-                safety_flag   = False
+                safety_flag = False
                 first_col_idx = i
 
             # collision->safe: store the index of last collision
@@ -811,11 +838,12 @@ class TrajectoryUtils():
             col_prev = col_now
 
         return segments
+
     # # #}
 
     # #{ getLookaheadPoint()
     def getLookaheadPoint(self, pose, path, la_dist, path_index):
-        '''
+        """
         Finds a point on the path at certain distance.
 
         Parameters:
@@ -827,16 +855,16 @@ class TrajectoryUtils():
         Returns:
             Pose: the lookahead point
             int: path_index of the found lookahead point
-        '''
+        """
         goal_candidates = []
 
         while True:
             if path_index > 0:
                 v_begin = path[path_index - 1]
-                v_end   = path[path_index]
+                v_end = path[path_index]
             else:
                 v_begin = pose
-                v_end   = path[path_index]
+                v_end = path[path_index]
             # print("v begin and end = ", v_begin, v_end)
 
             # go to next segment if dist traveled is lower than lookahead dist and end of segment is closer than la dist
@@ -846,14 +874,14 @@ class TrajectoryUtils():
 
             if dist_to_end < la_dist:
 
-                if path_index == len(path) - 1: # end of the path too close
+                if path_index == len(path) - 1:  # end of the path too close
                     goal_candidates.append(v_end)
                     break
                 else:
                     path_index = min(path_index + 1, len(path) - 1)
 
             else:
-                intersections   = lineSphereIntersections(pose.point, la_dist, v_begin.point, v_end.point)
+                intersections = lineSphereIntersections(pose.point, la_dist, v_begin.point, v_end.point)
                 goal_candidates = []
                 for i in range(len(intersections)):
                     intersection = intersections[i]
@@ -876,7 +904,7 @@ class TrajectoryUtils():
 
     # #{ unwrapHeadingInPath()
     def unwrapHeadingInPath(self, path):
-        '''
+        """
         Unwraps heading in the entire path.
 
         Parameters:
@@ -884,7 +912,7 @@ class TrajectoryUtils():
 
         Returns:
             path_unwrapped (list[Pose]): list of 3D poses with each pose having positive
-        '''
+        """
         path_unwrapped = [path[0]]
 
         for k in range(1, len(path)):
@@ -893,15 +921,16 @@ class TrajectoryUtils():
                 path_unwrapped.append(path[k])
             else:
                 heading_diff = angleDiff(prev_heading, path[k].heading)
-                pose         = Pose(path[k].point, prev_heading + heading_diff)
+                pose = Pose(path[k].point, prev_heading + heading_diff)
                 path_unwrapped.append(pose)
 
         return path_unwrapped
+
     # #} end of unwrapHeadingInPath()
 
     # #{ getParametrizedTrajectory()
     def getParametrizedTrajectory(self, waypoints, v_lims, a_lims):
-        '''
+        """
         Finds time parametrization throughout the given waypoints.
 
         Parameters:
@@ -911,20 +940,21 @@ class TrajectoryUtils():
 
         Returns:
             trajectory (TOPPRA instance): time parametrization of the given waypoints
-        '''
+        """
 
-        print('[PARAMETRIZING TRAJECTORY]')
+        print("[PARAMETRIZING TRAJECTORY]")
         unwrapped_heading_path = self.unwrapHeadingInPath(waypoints)
-        trajectory             = self.computeTimeParametrization(unwrapped_heading_path, v_lims, a_lims)
+        trajectory = self.computeTimeParametrization(unwrapped_heading_path, v_lims, a_lims)
 
         return trajectory
+
     # #} end of
 
     ## | ----------------- Getters and conversions ---------------- |
 
     # # #{ getLength()
     def getLength(self, poses):
-        '''
+        """
         Finds length of trajectory poses.
 
         Parameters:
@@ -932,16 +962,17 @@ class TrajectoryUtils():
 
         Returns:
             length (float): length of the trajectory
-        '''
+        """
         length = 0.0
         for i in range(1, len(poses)):
             length += distEuclidean(poses[i - 1].point, poses[i].point)
         return length
+
     # # #}
 
     # # #{ posesToTrajectory()
     def posesToTrajectory(self, poses):
-        '''
+        """
         Converts poses to Trajectory.
 
         Parameters:
@@ -949,13 +980,15 @@ class TrajectoryUtils():
 
         Returns:
             trajectory (Trajectory): 1-segment trajectory
-        '''
+        """
 
         # convert to Trajectory class (hack: with 1 segment only)
         trajectory = Trajectory(self.dT, [poses[0], poses[-1]])
         trajectory.setSegment(0, poses)
 
         return trajectory
+
     # # #}
+
 
 # # #}
