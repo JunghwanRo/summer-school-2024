@@ -479,12 +479,16 @@ class TrajectoryUtils:
             sampling_step = trajectory.dT
 
             # STUDENTS TODO: Sample the path parametrization 'toppra_trajectory' (instance of TOPPRA library).
-            raise NotImplementedError("[STUDENTS TODO] Trajectory sampling not finished. You have to implement it on your own.")
+            # DONE - BY MAXI
+            # raise NotImplementedError("[STUDENTS TODO] Trajectory sampling not finished. You have to implement it on your own.")
             # Tips:
             #  - check code examples for TOPPRA: https://hungpham2511.github.io/toppra/auto_examples/index.html
             #  - use 'toppra_trajectory' and the predefined sampling step 'sampling_step'
-
-            samples = []  # [STUDENTS TODO] Fill this variable with trajectory samples
+            num_points = int(toppra_trajectory.duration/sampling_step)
+            ts_sample = np.linspace(start=0, stop=toppra_trajectory.duration, num=num_points)
+            qs_sample = toppra_trajectory(ts_sample)
+            #samples = [] # [STUDENTS TODO] Fill this variable with trajectory samples
+            samples = qs_sample
 
             # Convert to Trajectory class
             poses = [Pose(q[0], q[1], q[2], q[3]) for q in samples]
