@@ -215,9 +215,15 @@ class TrajectoryUtils:
                 #  - interpolate the heading linearly (create a function of distance between two points of the subpath)
                 #  - do not forget to wrap angle to (-pi, pi) (see/use wrapAngle() in utils.py)
                 #  - see/use distEuclidean() in utils.py
+                # Compute the distance between the previous and current point
+                
+                dist_between_points = distEuclidean(subtraj_point_0, subtraj_point_1)
 
+                # Linearly interpolate the heading based on distance
+                fraction_of_distance = dist_between_points / subtraj_len
+                
                 # [STUDENTS TODO] Change variable 'desired_heading', nothing else
-                desired_heading = waypoints[0].heading
+                desired_heading = wrapAngle(current_heading + delta_heading * fraction_of_distance)
 
                 # replace heading
                 current_heading   = desired_heading
