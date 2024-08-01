@@ -98,7 +98,7 @@ class TSPSolver3D():
         n              = len(viewpoints)
         self.distances = np.zeros((n, n))
         self.paths = {}
-        print("[INFO]: ----------------- STARTING DISTANCE COMPUTATION AND PATH SEQUENCING -----------------")
+
         # find path between each pair of goals (a, b)
         for a in range(n):
             for b in range(a+1, n):
@@ -125,7 +125,6 @@ class TSPSolver3D():
                 self.distances[b][a] = distance
         # compute TSP tour
         path = self.compute_tsp_tour(viewpoints, path_planner)
-        print("[INFO]: ----------------- FINISHING DISTANCE COMPUTATION AND PATH SEQUENCING -----------------")
         return path
 
     # #}
