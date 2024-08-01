@@ -21,7 +21,7 @@ path_planner:
       gaussian:
         stddev_inflation: 0.2 # Inflation of standard deviation in all axes during gaussian sampling (m)
     star:
-      neighborhood: 0.4 # (m)
+      neighborhood: 1.0 # (m)
 
   # A* method parameters
   astar:

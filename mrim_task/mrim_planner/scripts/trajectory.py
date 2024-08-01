@@ -158,8 +158,8 @@ class TrajectoryUtils:
     ## | ------------- Functions: trajectory (re)sampling ------------- |
 
     # # #{ interpolateHeading()
-    def interpolateHeading(self, waypoints:Viewpoint):
-        '''
+    def interpolateHeading(self, waypoints: Viewpoint):
+        """
         Interpolates linearly the UAV heading between waypoints.
 
         Parameters:
@@ -167,16 +167,20 @@ class TrajectoryUtils:
 
         Returns:
             wps_interp (list[Pose]): list of interpolated waypoints with size equaling the input waypoints
-        '''
+        """
 
-        assert waypoints[0].heading  is not None, "[tsp_trajectory::interpolateHeading()] Heading of first waypoints sample is None. Can't interpolate."
-        assert waypoints[-1].heading is not None, "[tsp_trajectory::interpolateHeading()] Heading of last waypoints sample is None. Last sample should equal the start."
+        assert (
+            waypoints[0].heading is not None
+        ), "[tsp_trajectory::interpolateHeading()] Heading of first waypoints sample is None. Can't interpolate."
+        assert (
+            waypoints[-1].heading is not None
+        ), "[tsp_trajectory::interpolateHeading()] Heading of last waypoints sample is None. Last sample should equal the start."
 
         wps_interp = []
 
         idx = 0
         while idx != (len(waypoints) - 1):
-            g_from  = waypoints[idx]
+            g_from = waypoints[idx]
 
             # Find subtraj: sequence of poses (included) with defined heading
             subtraj = [g_from]
@@ -190,11 +194,11 @@ class TrajectoryUtils:
                     break
 
             # get desired heading change from the beginning to end of this subtrajectory
-            g_to  = subtraj[-1]
+            g_to = subtraj[-1]
             delta_heading = wrapAngle(g_to.heading - g_from.heading)
 
             # get initial heading and subtraj length
-            hdg_from    = wrapAngle(g_from.heading)
+            hdg_from = wrapAngle(g_from.heading)
             current_heading = hdg_from
             subtraj_len = self.getLength(subtraj)
 
@@ -216,18 +220,18 @@ class TrajectoryUtils:
                 #  - do not forget to wrap angle to (-pi, pi) (see/use wrapAngle() in utils.py)
                 #  - see/use distEuclidean() in utils.py
                 # Compute the distance between the previous and current point
-                
+
                 dist_between_points = distEuclidean(subtraj_point_0, subtraj_point_1)
 
                 # Linearly interpolate the heading based on distance
                 fraction_of_distance = dist_between_points / subtraj_len
-                
+
                 # [STUDENTS TODO] Change variable 'desired_heading', nothing else
                 desired_heading = wrapAngle(current_heading + delta_heading * fraction_of_distance)
 
                 # replace heading
-                current_heading   = desired_heading
-                wp         = subtraj[i]
+                current_heading = desired_heading
+                wp = subtraj[i]
                 wp.heading = desired_heading
                 wps_interp.append(wp)
 
@@ -484,10 +488,10 @@ class TrajectoryUtils:
             # Tips:
             #  - check code examples for TOPPRA: https://hungpham2511.github.io/toppra/auto_examples/index.html
             #  - use 'toppra_trajectory' and the predefined sampling step 'sampling_step'
-            num_points = int(toppra_trajectory.duration/sampling_step) + 3
+            num_points = int(toppra_trajectory.duration / sampling_step) + 3
             ts_sample = np.linspace(start=0, stop=toppra_trajectory.duration, num=num_points)
             qs_sample = toppra_trajectory(ts_sample)
-            #samples = [] # [STUDENTS TODO] Fill this variable with trajectory samples
+            # samples = [] # [STUDENTS TODO] Fill this variable with trajectory samples
             samples = qs_sample
 
             # Convert to Trajectory class
@@ -681,6 +685,18 @@ class TrajectoryUtils:
                 # keep checking if the robot trajectories collide
                 collision_flag, _ = self.trajectoriesCollide(trajectories[delay_robot_idx], trajectories[nondelay_robot_idx], safety_distance)
 
+            trajectories[delay_robot_idx].delayStart(1.0)
+
+            collision_flag, collision_idx = self.trajectoriesCollide(trajectories[delay_robot_idx], trajectories[nondelay_robot_idx], safety_distance)
+            while collision_flag:
+
+                # delay the shorter-trajectory UAV at the start point by sampling period
+                delay_t += delay_step
+
+                # [STUDENTS TODO] use function `trajectory.delayStart(X)` to delay a UAV at the start location by X seconds
+                trajectories[delay_robot_idx].delayStart(delay_step)
+                # keep checking if the robot trajectories collide
+                collision_flag, _ = self.trajectoriesCollide(trajectories[delay_robot_idx], trajectories[nondelay_robot_idx], safety_distance)
         # # #}
 
         if delay_robot_idx is not None:
