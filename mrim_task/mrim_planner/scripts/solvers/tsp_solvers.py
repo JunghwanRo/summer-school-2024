@@ -98,14 +98,15 @@ class TSPSolver3D():
         n              = len(viewpoints)
         self.distances = np.zeros((n, n))
         self.paths = {}
-
+        print("[INFO]: ----------------- STARTING DISTANCE COMPUTATION AND PATH SEQUENCING -----------------")
         # find path between each pair of goals (a, b)
         for a in range(n):
-            for b in range(n):
+            for b in range(a+1, n):
                 if a == b:
                     continue
 
                 # [STUDENTS TODO]
+                # DONE - GUILLERMO GIL - Reduced calculation time to less than a half. Feel free to propose any upgrades
                 #   - Play with distance estimates in TSP (tsp/distance_estimates parameter in config) and see how it influences the solution
                 #   - You will probably see that computing for all poses from both sets takes a long time.
                 #   - Think if you can reduce the number of computations.
@@ -120,10 +121,11 @@ class TSPSolver3D():
                 # store paths/distances in matrices
                 self.paths[(a, b)]   = path
                 self.distances[a][b] = distance
-
+                self.paths[(b, a)]   = path
+                self.distances[b][a] = distance
         # compute TSP tour
         path = self.compute_tsp_tour(viewpoints, path_planner)
-
+        print("[INFO]: ----------------- FINISHING DISTANCE COMPUTATION AND PATH SEQUENCING -----------------")
         return path
 
     # #}
